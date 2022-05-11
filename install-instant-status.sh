@@ -167,11 +167,33 @@ http {
 EOF
 sudo service nginx restart
 
+# STARTUP SCRIPT #
+sudo tee /usr/local/instantstatus/runMigrations.sh <<'EOF' >/dev/null 2>&1
+#!/usr/bin/env bash
+if [[ -f /usr/local/instantstatus/runMigrations.txt ]];
+  source /usr/local/instantstatus/.nvm/nvm.sh
+  cd /usr/local/instantstatus/current/is-prisma && npm run db:migrate
+  rm /usr/local/instantstatus/runMigrations.txt
+fi
+EOF
+sudo chown instantstatus: /usr/local/instantstatus/runMigrations.sh
+sudo chmod 775 /usr/local/instantstatus/runMigrations.sh
+sudo su - instantstatus -c 'touch /usr/local/instantstatus/runMigrations.txt'
+
+# INSTALLING CRONTAB[LE] #
+output_log "[CRONTAB] Installing CRONTAB[LE]..." "$OUTPUT_LOG" "echoAsWell"
+tee tmpcron <<'EOF' >/dev/null 2>&1
+@reboot /bin/bash /usr/local/instantstatus/runMigrations.sh >> /usr/local/instantstatus/runMigrations.log 2>&1
+EOF
+sudo crontab -u instantstatus tmpcron
+rm tmpcron
+output_log "[CRONTAB] ...finished Installing CRONTAB[LE]" "$OUTPUT_LOG" "echoAsWell"
+
 sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/tooling/app.json /usr/local/instantstatus/app.json && source /usr/local/instantstatus/.nvm/nvm.sh && pm2 start /usr/local/instantstatus/app.json && pm2 save'
 echo 'cd /usr/local/instantstatus/current' | sudo tee -a /usr/local/instantstatus/.bashrc >/dev/null 2>&1
 
 output_log "[APP] MISC Tasks..." "$OUTPUT_LOG" "echoAsWell"
-sudo vim /root/.ssh/authorized_keys
+echo -n | sudo tee /root/.ssh/authorized_keys
 echo -n >/home/ubuntu/.ssh/authorized_keys
 output_log "[APP] ...finished MISC Tasks" "$OUTPUT_LOG" "echoAsWell"
 
