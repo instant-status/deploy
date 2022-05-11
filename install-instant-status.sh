@@ -170,7 +170,7 @@ sudo service nginx restart
 # STARTUP SCRIPT #
 sudo tee /usr/local/instantstatus/runMigrations.sh <<'EOF' >/dev/null 2>&1
 #!/usr/bin/env bash
-if [[ -f /usr/local/instantstatus/runMigrations.txt ]];
+if [[ -f /usr/local/instantstatus/runMigrations.txt ]]; then
   source /usr/local/instantstatus/.nvm/nvm.sh
   cd /usr/local/instantstatus/current/is-prisma && npm run db:migrate
   rm /usr/local/instantstatus/runMigrations.txt
