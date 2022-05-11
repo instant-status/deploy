@@ -77,6 +77,38 @@ sudo mv /etc/nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf.disabled
 sudo service nginx restart
 output_log "[APT] ...finished Installing NGINX, JQ" "$OUTPUT_LOG" "echoAsWell"
 
+# CREATING APP STRUCTURE #
+output_log "[APP] Creating Directory Structure..." "$OUTPUT_LOG" "echoAsWell"
+sudo su - instantstatus -c 'mkdir -p /usr/local/instantstatus/releases' >>"$OUTPUT_LOG" 2>&1
+sudo su - instantstatus -c 'ln -s /usr/local/instantstatus/releases/default current' >>"$OUTPUT_LOG" 2>&1
+output_log "[APP] ...finished Creating Directory Structure" "$OUTPUT_LOG" "echoAsWell"
+
+# INSTALLING APP #
+output_log "[APP] Installing App..." "$OUTPUT_LOG" "echoAsWell"
+sudo su - instantstatus -c 'cd /usr/local/instantstatus/releases && git clone "'"$REMOTE"'" -b "'"$VERSION"'" default'
+
+sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/ui/example.appConfig.ts /usr/local/instantstatus/current/ui/appConfig.ts'
+sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/is-config/src/example.apiConfig.ts /usr/local/instantstatus/current/is-config/src/apiConfig.ts'
+sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/is-config/.example.env /usr/local/instantstatus/current/is-config/.env'
+
+if [[ "$PARAMETERSTORE_PREFIX" != 'false' ]]; then
+  # INSTALLING AWSCLI #
+  output_log "[APT] Installing AWSCLI..." "$OUTPUT_LOG" "echoAsWell"
+  sudo apt install -qq -y python3-pip python3 >>"$OUTPUT_LOG" 2>&1
+  sudo pip3 install awscli >>"$OUTPUT_LOG" 2>&1
+  output_log "[APT] ...finished Installing AWSCLI" "$OUTPUT_LOG" "echoAsWell"
+
+  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/appConfig" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/ui/appConfig.ts >/dev/null 2>&1
+  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/apiConfig" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/is-config/src/apiConfig.ts >/dev/null 2>&1
+  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/env" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/is-config/.env >/dev/null 2>&1
+else
+  sudo su - instantstatus -c 'vim /usr/local/instantstatus/current/ui/appConfig.ts; vim /usr/local/instantstatus/current/is-config/src/apiConfig.ts; vim /usr/local/instantstatus/current/is-config/.env'
+fi
+
+sudo su - instantstatus -c 'source /usr/local/instantstatus/.nvm/nvm.sh && cd /usr/local/instantstatus/releases/default && npm run ci && npm run build'
+
+output_log "[APP] ...finished Installing App" "$OUTPUT_LOG" "echoAsWell"
+
 sudo cp /usr/local/instantstatus/current/tooling/nginx.conf.example /etc/nginx/conf.d/instantstatus.conf
 
 sudo tee /etc/nginx/nginx.conf <<'EOF' >/dev/null 2>&1
@@ -134,38 +166,6 @@ http {
 }
 EOF
 sudo service nginx restart
-
-# CREATING APP STRUCTURE #
-output_log "[APP] Creating Directory Structure..." "$OUTPUT_LOG" "echoAsWell"
-sudo su - instantstatus -c 'mkdir -p /usr/local/instantstatus/releases' >>"$OUTPUT_LOG" 2>&1
-sudo su - instantstatus -c 'ln -s /usr/local/instantstatus/releases/default current' >>"$OUTPUT_LOG" 2>&1
-output_log "[APP] ...finished Creating Directory Structure" "$OUTPUT_LOG" "echoAsWell"
-
-# INSTALLING APP #
-output_log "[APP] Installing App..." "$OUTPUT_LOG" "echoAsWell"
-sudo su - instantstatus -c 'cd /usr/local/instantstatus/releases && git clone "'"$REMOTE"'" -b "'"$VERSION"'" default'
-
-sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/ui/example.appConfig.ts /usr/local/instantstatus/current/ui/appConfig.ts'
-sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/is-config/src/example.apiConfig.ts /usr/local/instantstatus/current/is-config/src/apiConfig.ts'
-sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/is-config/.example.env /usr/local/instantstatus/current/is-config/.env'
-
-if [[ "$PARAMETERSTORE_PREFIX" != 'false' ]]; then
-  # INSTALLING AWSCLI #
-  output_log "[APT] Installing AWSCLI..." "$OUTPUT_LOG" "echoAsWell"
-  sudo apt install -qq -y python3-pip python3 >>"$OUTPUT_LOG" 2>&1
-  sudo pip3 install awscli >>"$OUTPUT_LOG" 2>&1
-  output_log "[APT] ...finished Installing AWSCLI" "$OUTPUT_LOG" "echoAsWell"
-
-  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/appConfig" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/ui/appConfig.ts >/dev/null 2>&1
-  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/apiConfig" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/is-config/src/apiConfig.ts >/dev/null 2>&1
-  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/env" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/is-config/.env >/dev/null 2>&1
-else
-  sudo su - instantstatus -c 'vim /usr/local/instantstatus/current/ui/appConfig.ts; vim /usr/local/instantstatus/current/is-config/src/apiConfig.ts; vim /usr/local/instantstatus/current/is-config/.env'
-fi
-
-sudo su - instantstatus -c 'source /usr/local/instantstatus/.nvm/nvm.sh && cd /usr/local/instantstatus/releases/default && npm run ci && npm run build'
-
-output_log "[APP] ...finished Installing App" "$OUTPUT_LOG" "echoAsWell"
 
 sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/tooling/app.json /usr/local/instantstatus/app.json && source /usr/local/instantstatus/.nvm/nvm.sh && pm2 start /usr/local/instantstatus/app.json && pm2 save'
 echo 'cd /usr/local/instantstatus/current' | sudo tee -a /usr/local/instantstatus/.bashrc >/dev/null 2>&1
