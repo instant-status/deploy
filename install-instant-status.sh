@@ -3,7 +3,7 @@
 
 # Accepts three optional flags:
 # [v] - Install a custom version of Instant Status, defaults to 'master' This script is only guaranteed to work
-#       with the latest major release
+#       with the latest release
 # [r] - Fetch Instant Status from a custom git repository, defaults to the main repo (https://github.com/instant-status/instant-status)
 # [p] - A prefix for Parameter Store, used to fetch configs (`appConfig`, `apiConfig`, `env`) securely, defaults to
 #       interactively editing example configs. Regardless of approach, config files inform the application build, and
