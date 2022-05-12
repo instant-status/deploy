@@ -4,12 +4,12 @@
 # Accepts three optional flags:
 # [v] - Install a custom version of Instant Status, defaults to 'master' This script is only guaranteed to work
 #       with the latest major release
-# [r] - Custom git remote for Instant Status, defaults to the main repo (https://github.com/instant-status/instant-status)
-# [p] - a prefix for Parameter Store, used to fetch configs (`appConfig`, `apiConfig`, `env`) securely, defaults to
+# [r] - Fetch Instant Status from a custom git repository, defaults to the main repo (https://github.com/instant-status/instant-status)
+# [p] - A prefix for Parameter Store, used to fetch configs (`appConfig`, `apiConfig`, `env`) securely, defaults to
 #       interactively editing example configs. Regardless of approach, config files inform the application build, and
 #       should be considered as 'baked into' any image. If values change, a fresh install/image is recommended.
 # e.g. /tmp/install-instant-status.sh -v 'v3.2.1' -r 'https://github.com/instant-status/instant-status.git'
-# e.g. /tmp/install-instant-status.sh -p '/InstantStatus/app/dev'
+# e.g. /tmp/install-instant-status.sh -p '/InstantStatus/app/prod'
 
 PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
 

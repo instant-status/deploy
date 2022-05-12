@@ -15,12 +15,12 @@ Optional flags:
 | Flag | Description                                                                                                                                                                                                                                                                                                                    |
 | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | -v   | Install a custom version of Instant Status, defaults to 'master' This script is only guaranteed to work with Ubuntu Server 22, and the latest major release of Instant Status                                                                                                                                                  |
-| -r   | Custom git remote for Instant Status, defaults to the [main repo](https://github.com/instant-status/instant-status)                                                                                                                                                                                                            |
+| -r   | Fetch Instant Status from a custom git repository, defaults to the [main repo](https://github.com/instant-status/instant-status)                                                                                                                                                                                               |
 | -p   | Use this AWS Parameter Store prefix to fetch configs (`appConfig`, `apiConfig`, `env`) securely, defaults to interactively edit example configs. Regardless of approach, config files inform the application build, and should be considered as 'baked into' any image. If values change, a fresh install/image is recommended |
 
 E.g. /tmp/install-instant-status.sh -v 'v3.2.1' -r 'https://github.com/instant-status/instant-status.git'
 
-E.g. /tmp/install-instant-status.sh -p '/InstantStatus/app/dev'
+E.g. /tmp/install-instant-status.sh -p '/InstantStatus/app/prod'
 
 ## Recommended Production Infrastructure
 
