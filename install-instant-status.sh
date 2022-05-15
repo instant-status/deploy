@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 # Ubuntu 22
 
-# Accepts three optional flags:
-# [v] - Install a custom version of Instant Status, defaults to 'master' This script is only guaranteed to work
+# Available flags:
+# [v] - Install a custom version of Instant Status, defaults to 'master'. This script is only guaranteed to work
 #       with the latest release
-# [r] - Fetch Instant Status from a custom git repository, defaults to the main repo (https://github.com/instant-status/instant-status)
+# [g] - Fetch Instant Status from a custom git repository, defaults to the main repo (https://github.com/instant-status/instant-status)
 # [p] - A prefix for Parameter Store, used to fetch configs (`appConfig`, `apiConfig`, `env`) securely, defaults to
 #       interactively editing example configs. Regardless of approach, config files inform the application build, and
 #       should be considered as 'baked into' any image. If values change, a fresh install/image is recommended.
-# e.g. /tmp/install-instant-status.sh -v 'v3.2.1' -r 'https://github.com/instant-status/instant-status.git'
-# e.g. /tmp/install-instant-status.sh -p '/InstantStatus/app/prod'
+# [r] - Region for AWS Parameter Store, defaults to 'us-east-1'
+# e.g. /tmp/install-instant-status.sh -v 'v3.2.1' -g 'https://github.com/instant-status/instant-status.git'
+# e.g. /tmp/install-instant-status.sh -p '/InstantStatus/app/prod' -r 'us-east-1'
 
 PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin"
 
@@ -17,21 +18,23 @@ OUTPUT_LOG="/tmp/log.txt"
 workingDirectory='/home/ubuntu'
 
 VERSION='master'
-REMOTE='https://github.com/instant-status/instant-status.git'
+GIT_REMOTE='https://github.com/instant-status/instant-status.git'
 PARAMETERSTORE_PREFIX=false
+PARAMETERSTORE_REGION=us-east-1
 
-while getopts 'v:r:p:' flag; do
+while getopts 'v:g:p:r:' flag; do
   case "${flag}" in
   v) VERSION="${OPTARG}" ;;
-  r) REMOTE="${OPTARG}" ;;
+  g) GIT_REMOTE="${OPTARG}" ;;
   p) PARAMETERSTORE_PREFIX="${OPTARG}" ;;
+  r) PARAMETERSTORE_REGION="${OPTARG}" ;;
   *)
     echo 'Unsupported flag'
     ;;
   esac
 done
 
-echo "$VERSION -- $REMOTE -- $PARAMETERSTORE_PREFIX"
+echo "$VERSION -- $GIT_REMOTE -- $PARAMETERSTORE_PREFIX -- $PARAMETERSTORE_REGION"
 
 function output_log() {
   if [[ "$3" == "echoAsWell" ]]; then
@@ -85,7 +88,7 @@ output_log "[APP] ...finished Creating Directory Structure" "$OUTPUT_LOG" "echoA
 
 # INSTALLING APP #
 output_log "[APP] Installing App..." "$OUTPUT_LOG" "echoAsWell"
-sudo su - instantstatus -c 'cd /usr/local/instantstatus/releases && git clone "'"$REMOTE"'" -b "'"$VERSION"'" default'
+sudo su - instantstatus -c 'cd /usr/local/instantstatus/releases && git clone "'"$GIT_REMOTE"'" -b "'"$VERSION"'" default'
 
 sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/ui/example.appConfig.ts /usr/local/instantstatus/current/ui/appConfig.ts'
 sudo su - instantstatus -c 'cp /usr/local/instantstatus/current/is-config/src/example.apiConfig.ts /usr/local/instantstatus/current/is-config/src/apiConfig.ts'
@@ -98,9 +101,9 @@ if [[ "$PARAMETERSTORE_PREFIX" != 'false' ]]; then
   sudo pip3 install awscli >>"$OUTPUT_LOG" 2>&1
   output_log "[APT] ...finished Installing AWSCLI" "$OUTPUT_LOG" "echoAsWell"
 
-  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/appConfig" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/ui/appConfig.ts >/dev/null 2>&1
-  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/apiConfig" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/is-config/src/apiConfig.ts >/dev/null 2>&1
-  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/env" --with-decryption --region eu-west-2 | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/is-config/.env >/dev/null 2>&1
+  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/appConfig" --with-decryption --region "$PARAMETERSTORE_REGION" | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/ui/appConfig.ts >/dev/null 2>&1
+  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/apiConfig" --with-decryption --region "$PARAMETERSTORE_REGION" | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/is-config/src/apiConfig.ts >/dev/null 2>&1
+  aws ssm get-parameter --name "$PARAMETERSTORE_PREFIX/env" --with-decryption --region "$PARAMETERSTORE_REGION" | jq -r '.Parameter.Value' | sudo tee /usr/local/instantstatus/current/is-config/.env >/dev/null 2>&1
 else
   sudo su - instantstatus -c 'vim /usr/local/instantstatus/current/ui/appConfig.ts; vim /usr/local/instantstatus/current/is-config/src/apiConfig.ts; vim /usr/local/instantstatus/current/is-config/.env'
 fi
