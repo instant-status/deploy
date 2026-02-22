@@ -9,8 +9,7 @@ Scripts, tools and diagrams to aid in the deployment and installation of Instant
 
 ## Recommended Production Infrastructure
 
-[![instant-status-infrastructure-diagram-thumb](https://raw.githubusercontent.com/instant-status/deploy/master/img/instant-status-infrastructure-diagram-thumb.png)](https://raw.githubusercontent.com/instant-status/deploy/master/img/instant-status-infrastructure-diagram.png)
-_click for full resolution zoomable image_
+![instant-status-infrastructure-diagram](https://raw.githubusercontent.com/instant-status/deploy/master/img/instant-status-infrastructure-diagram.png)
 
 ## Instant Status Install Script
 
